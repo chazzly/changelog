@@ -19,9 +19,9 @@ package commands
 
 import (
 	"fmt"
-	"github.com/codegangsta/cli"
-	"github.com/sebastianm/changelog/generator"
-	"github.com/sebastianm/changelog/git"
+	"github.com/urfave/cli"
+	"../generator"
+	"../git"
 	"io/ioutil"
 	"os"
 )
@@ -33,11 +33,11 @@ var Generate = cli.Command{
 	Usage:  "generate the changelog for a version",
 	Action: generate,
 	Flags: []cli.Flag{
-		cli.StringFlag{"version, v", "", "Required. The version to be written to the changelog"},
-		cli.StringFlag{"file, f", "CHANGELOG.md", "Which file to read the current changelog from and prepend the new changelog's contents to"},
-		cli.StringFlag{"repository, r", "", "If this is provided, allows issues and commit hashes to be linked to the actual commit. Usually used with github repositories"},
-		cli.StringFlag{"start, s", "", "Which commit the changelog should start at. By default, uses previous tag, or if no previous tag the first commit"},
-		cli.StringFlag{"end, e", "HEAD", "Which commit the changelog should end at. By default, uses HEAD"},
+		cli.StringFlag{Name: "version, v", Value: "", Usage: "Required. The version to be written to the changelog"},
+		cli.StringFlag{Name: "file, f", Value: "CHANGELOG.md", Usage: "Which file to read the current changelog from and prepend the new changelog's contents to"},
+		cli.StringFlag{Name: "repository, r", Value: "", Usage: "If this is provided, allows issues and commit hashes to be linked to the actual commit. Usually used with github repositories"},
+		cli.StringFlag{Name: "start, s", Value: "", Usage: "Which commit the changelog should start at. By default, uses previous tag, or if no previous tag the first commit"},
+		cli.StringFlag{Name: "end, e", Value: "HEAD", Usage: "Which commit the changelog should end at. By default, uses HEAD"},
 	},
 }
 
@@ -61,7 +61,7 @@ func generate(c *cli.Context) {
 	fmt.Printf("Generating changelog from %s to %s...\n", from, to)
 
 	commits, _ := git.GetChangelogCommits(from, to)
-	writeChangelog(c.String("file"), commits)
+	writeChangelog(c.String("file"), commits, c)
 }
 
 func writeChangelog(filename string, commits []*git.Commit, c *cli.Context) {

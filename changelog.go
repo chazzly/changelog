@@ -18,9 +18,9 @@
 package main
 
 import (
-	"github.com/sebastianm/changelog/commands"
+	"./commands"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 	"os"
 )
 

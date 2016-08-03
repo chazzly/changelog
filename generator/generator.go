@@ -19,7 +19,7 @@ package generator
 
 import (
 	"fmt"
-	"github.com/sebastianm/changelog/git"
+	"../git"
 )
 
 const (
