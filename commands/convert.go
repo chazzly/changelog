@@ -27,6 +27,8 @@ import (
 	"errors"
 )
 
+const IAMCONVERTED = "<!-- Converted -->"
+
 func Convert() []cli.Command {
 	return []cli.Command{
 		{
@@ -58,7 +60,7 @@ func convert(c *cli.Context) {
 	// parse into commits - using existing Commit struct
 	entries, header, err := ParseOldLog(existingContent)
 	if err != nil {
-		fmt.Println("ERROR: File to convert: " + c.String("file") + "appears to be empty")
+		fmt.Println("ERROR: File to convert: " + c.String("file") + " is empty or has already been converted")
 		os.Exit(1)
 	}
 
@@ -79,7 +81,12 @@ func ParseOldLog(oldContent string) (entries []OldEntry, header string, err erro
 	}
 
 	oldContent = strings.TrimPrefix(oldContent, "\n")
+	oldContent = strings.TrimSuffix(oldContent, "\n")
 	lines := strings.Split(oldContent, "\n")
+
+	if lines[len(lines)-1] == IAMCONVERTED {
+		return nil, "", errors.New("Already Converted")
+	}
 
 	newEntry := OldEntry{}
 	var headfound,firstVer bool
@@ -106,6 +113,7 @@ func ParseOldLog(oldContent string) (entries []OldEntry, header string, err erro
 			header += lines[i] + "\n"
 		case newEntry.Version != "":
 			ln := strings.SplitN(lines[i], "-", 2)
+			// TODO: need to account for multiple changes per entry with multiple authors and multi-line body
 			newEntry.Author = ln[0]
 			newEntry.Body = ln[1]
 		default:
@@ -160,6 +168,6 @@ func GenerateConvertedChangelogContent(header string, entries []OldEntry) (newCo
 		entryContent += tentry.Author + " - " + tentry.Body + "\n\n"
 	}
 
-	newContent = header + "\n" + entryContent
+	newContent = header + "\n" + entryContent + "\n" + IAMCONVERTED
 	return
 }

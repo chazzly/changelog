@@ -65,7 +65,6 @@ func generate(c *cli.Context) {
 
 	commits, _ := git.GetChangelogCommits(from, to)
 	writeChangelog(c.String("file"), commits, c)
-	fmt.Println("I got to here")
 }
 
 func writeChangelog(filename string, commits []*git.Commit, c *cli.Context) {

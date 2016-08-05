@@ -20,6 +20,8 @@ package generator
 import (
 	"fmt"
 	"../git"
+	"strings"
+	"regexp"
 )
 
 const (
@@ -40,16 +42,44 @@ type sections struct {
 func GenerateNewChangelogContent(existingContent string, commits []*git.Commit, version string) (newContent string, err error) {
 	fmt.Printf("Generating content for %d commits\n", len(commits))
 
-	header := "CHANGELOG\n========\nList changes on a release by release basis.\n\n"
-	// TODO: Add cookbook name to Header
+	existingContent = strings.TrimPrefix(existingContent, "\n")
+	existingContent = strings.TrimSuffix(existingContent, "\n")
+	lines := strings.Split(existingContent, "\n")
+
+	var header, oldContent string
+	var headfound, firstVer bool
+	for i := 0; i < len(lines); i++ {
+		hm, _ := regexp.MatchString("====*", lines[i])
+		vm, _ := regexp.MatchString("---*", lines[i])
+		vs, _ := regexp.MatchString("\\s*\\d\\.\\d\\.\\d\\s*", lines[i])
+		switch {
+		case hm:
+			headfound = true
+			header += lines[i] + "\n"
+		case !headfound:
+			header += lines[i] + "\n"
+		case vs, vm:
+			firstVer = true
+			oldContent += lines[i] + "\n"
+		case !firstVer:
+			header += lines[i] + "\n"
+		default:
+			oldContent += lines[i] + "\n"
+		}
+	}
+
+	if header == "" {
+		header = "CHANGELOG\n========\nList changes on a release by release basis.\n\n"
+		// TODO: Add cookbook name to Header
+	}
 
 	var freshContent string = version + "\n------\n"
 	for _,tcommit := range commits {
 		var entry string
-		entry = tcommit.Date + " - "+ tcommit.Author + ": " + tcommit.Subject + "\n\n"
+		entry = tcommit.Date + " - "+ tcommit.Author + ": " + tcommit.Subject + "\n"
 		freshContent = freshContent + entry
 	}
 
-	newContent = header + freshContent + existingContent
+	newContent = header + freshContent + "\n" + oldContent
 	return
 }
