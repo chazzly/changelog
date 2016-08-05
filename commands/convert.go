@@ -24,7 +24,6 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
-	"strconv"
 	"errors"
 )
 
@@ -57,14 +56,14 @@ func convert(c *cli.Context) {
 	existingContent = string(contentBytes)
 
 	// parse into commits - using existing Commit struct
-	commits, err := ParseOldLog(existingContent)
+	entries, header, err := ParseOldLog(existingContent)
 	if err != nil {
 		fmt.Println("ERROR: File to convert: " + c.String("file") + "appears to be empty")
 		os.Exit(1)
 	}
 
 	// send to writeChangelog
-	writesConvertedChangelog(c.String("file"), commits, c)
+	writesConvertedChangelog(c.String("file"), header, entries, c)
 }
 
 type OldEntry struct {
@@ -74,54 +73,50 @@ type OldEntry struct {
 //	Date	string // TODO:  Do not know if any have a date, but in case.
 }
 
-func ParseOldLog(oldContent string) (entries []OldEntry, err error) {
+func ParseOldLog(oldContent string) (entries []OldEntry, header string, err error) {
 	if oldContent == "" {
-		return nil, errors.New("empty")
+		return nil, "", errors.New("empty")
 	}
 
 	oldContent = strings.TrimPrefix(oldContent, "\n")
 	lines := strings.Split(oldContent, "\n")
 
-	fmt.Println(len(lines))
 	newEntry := OldEntry{}
-	var headfound bool
-	var header string
+	var headfound,firstVer bool
 	for i := 0 ; i < len(lines) ; i++ {
 		hm, _ := regexp.MatchString("====*", lines[i])
 		vm, _ := regexp.MatchString("---*", lines[i])
 		vs, _ := regexp.MatchString("\\s*\\d\\.\\d\\.\\d\\s*", lines[i])
+		bl, _ := regexp.MatchString("^\\s*$", lines[i])
 		switch {
 		case hm:
-			fmt.Println(":" + strconv.Itoa(i) + ": found header: " + lines[i])
 			headfound = true
-		case !headfound:
-			fmt.Println(":" + strconv.Itoa(i) + ": more header: " + lines[i])
 			header += lines[i] + "\n"
+		case !headfound:
+			header += lines[i] + "\n"
+		case bl, vm:
 		case vs:
-			fmt.Println(":" + strconv.Itoa(i) + ": new version: " + lines[i])
 			if newEntry.Version != "" {
 				entries = append(entries, newEntry)
 				newEntry = OldEntry{}
 			}
 			newEntry.Version= strings.Replace(lines[i], "\n", "", 0)
-		case vm:
-			fmt.Println(":" + strconv.Itoa(i) + ": separator. " + lines[i])
-		case len(lines[i]) != 0 && newEntry.Version != "":
-			fmt.Println(":" + strconv.Itoa(i) + ": details: " + lines[i])
+			firstVer = true
+		case !firstVer:
+			header += lines[i] + "\n"
+		case newEntry.Version != "":
 			ln := strings.SplitN(lines[i], "-", 2)
 			newEntry.Author = ln[0]
 			newEntry.Body = ln[1]
 		default:
-			fmt.Println(":" + strconv.Itoa(i) + ": nothing to do with this. " + lines[i])
 		}
 	}
 	entries = append(entries, newEntry)
-	fmt.Println(entries)
 	return
 }
 
-func writesConvertedChangelog(filename string, entries []OldEntry, c *cli.Context) {
-	fmt.Printf("Parsed %d commits\n", len(entries))
+func writesConvertedChangelog(filename, header string, entries []OldEntry, c *cli.Context) {
+	fmt.Printf("Parsed %d old entries\n", len(entries))
 
 	_, err := os.Stat(filename)
 
@@ -140,7 +135,7 @@ func writesConvertedChangelog(filename string, entries []OldEntry, c *cli.Contex
 		}
 	}
 
-	newContent, err := GenerateConvertedChangelogContent(entries)
+	newContent, err := GenerateConvertedChangelogContent(header, entries)
 	err = ioutil.WriteFile(filename, []byte(newContent), 0644)
 
 	if err != nil {
@@ -149,19 +144,22 @@ func writesConvertedChangelog(filename string, entries []OldEntry, c *cli.Contex
 	}
 }
 
-func GenerateConvertedChangelogContent(entries []OldEntry) (newContent string, err error) {
-	fmt.Printf("Generating content for %d commits\n", len(entries))
+func GenerateConvertedChangelogContent(header string, entries []OldEntry) (newContent string, err error) {
+	fmt.Printf("Converting %d Change log entries\n", len(entries))
 
-	header := "CHANGELOG\n========\nList changes on a release by release basis.\n\n"
+	if header == "" {
+		header = "CHANGELOG\n========\nList changes on a release by release basis.\n"
+	}
 	// TODO: Add cookbook name to Header
 
 	var entryContent string
-	for _, tentry := range entries {
+	for i := len(entries); i > 0; i-- {
+		tentry := entries[i-1]
 		entryContent += tentry.Version
 		entryContent += "\n------\n"
 		entryContent += tentry.Author + " - " + tentry.Body + "\n\n"
 	}
 
-	newContent = header + entryContent
+	newContent = header + "\n" + entryContent
 	return
 }
