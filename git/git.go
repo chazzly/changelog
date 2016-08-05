@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+//	"github.com/codegangsta/cli"
 )
 
 const gitCommitGrep = "^feat|^fix|BREAKING"
-const gitCommitFormat = "%H%n%s%n%b%n==END=="
+const gitCommitFormat = "%H%n%cd%n%an%n%s%n%b%n==END=="
 const MAX_SUBJECT_LENGTH = 80
 
 var closeRegex = regexp.MustCompile(`\s*(?:Closes|Fixes|Resolves)\s#(\d+)`)
@@ -50,6 +51,8 @@ func getFirstCommit() (firstCommitHash string, err error) {
 type Commit struct {
 	Hash      string
 	Subject   string
+	Author    string
+	Date	  string  // TODO:  Make this an actual date -thing, not just a string
 	Closes    []int
 	Breaks    []string
 	Body      string
@@ -60,7 +63,8 @@ type Commit struct {
 func GetChangelogCommits(from string, to string) (commits []*Commit, err error) {
 	commits = make([]*Commit, 0)
 	//commitRange := from + ".." + to
-	gitCmd := exec.Command("git", "log", "--format=\""+gitCommitFormat+"\"", "--grep=\""+gitCommitGrep+"\"", "-E")
+//	gitCmd := exec.Command("git", "log", "--format=\""+gitCommitFormat+"\"", "--grep=\""+gitCommitGrep+"\"", "-E")
+	gitCmd := exec.Command("git", "log", "--format=\"" + gitCommitFormat + "\"", "--date=format:%c")
 	output, err := gitCmd.Output()
 	if err != nil {
 		return
@@ -88,7 +92,9 @@ func parseCommit(commit string, commits []*Commit) []*Commit {
 
 	newCommit := &Commit{}
 	newCommit.Hash = strings.Replace(lines[1], "\n", "", 0)
-	newCommit.Subject = strings.Replace(lines[2], "\n", "", 0)
+	newCommit.Author = strings.Replace(lines[3], "\n", "", 0)
+	newCommit.Date = strings.Replace(lines[2], "\n", "", 0)
+	newCommit.Subject = strings.Replace(lines[4], "\n", "", 0)
 	newCommit.Closes = make([]int, 0)
 	newCommit.Breaks = make([]string, 0)
 	newCommit.Body = commit

@@ -31,7 +31,11 @@ func main() {
 	app.Author = "Sebastian Müller"
 	app.Email = "info@sebastian-mueller.net"
 	app.Version = "0.0.1"
-	app.Commands = []cli.Command{commands.Generate}
-
+	app.Commands = Commands()
 	app.Run(os.Args)
+}
+
+func Commands() (comms []cli.Command) {
+	comms = append(commands.Convert(), commands.Generate())
+	return
 }

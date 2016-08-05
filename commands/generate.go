@@ -28,23 +28,26 @@ import (
 
 const generateCommandName = "generate"
 
-var Generate = cli.Command{
-	Name:   generateCommandName,
-	Usage:  "generate the changelog for a version",
-	Action: generate,
-	Flags: []cli.Flag{
-		cli.StringFlag{Name: "version, v", Value: "", Usage: "Required. The version to be written to the changelog"},
-		cli.StringFlag{Name: "file, f", Value: "CHANGELOG.md", Usage: "Which file to read the current changelog from and prepend the new changelog's contents to"},
-		cli.StringFlag{Name: "repository, r", Value: "", Usage: "If this is provided, allows issues and commit hashes to be linked to the actual commit. Usually used with github repositories"},
-		cli.StringFlag{Name: "start, s", Value: "", Usage: "Which commit the changelog should start at. By default, uses previous tag, or if no previous tag the first commit"},
-		cli.StringFlag{Name: "end, e", Value: "HEAD", Usage: "Which commit the changelog should end at. By default, uses HEAD"},
-	},
+func Generate() cli.Command {
+	return cli.Command{
+			Name:   generateCommandName,
+			Usage:  "generate the changelog for a version",
+			Action: generate,
+			Flags: []cli.Flag{
+				cli.StringFlag{Name: "version, v", Value: "", Usage: "Required. The version to be written to the changelog"},
+				cli.StringFlag{Name: "file, f", Value: "CHANGELOG.md", Usage: "Which file to read the current changelog from and prepend the new changelog's contents to"},
+				cli.StringFlag{Name: "repository, r", Value: "", Usage: "If this is provided, allows issues and commit hashes to be linked to the actual commit. Usually used with github repositories"},
+				cli.StringFlag{Name: "start, s", Value: "", Usage: "Which commit the changelog should start at. By default, uses previous tag, or if no previous tag the first commit"},
+				cli.StringFlag{Name: "end, e", Value: "HEAD", Usage: "Which commit the changelog should end at. By default, uses HEAD"},
+			},
+	}
 }
 
 func generate(c *cli.Context) {
 	checkNotEmptyStringFlag(c, "version", "No version provided", generateCommandName)
 
-	from, to := c.String("from"), c.String("to")
+	from, to := c.String("start"), c.String("end")
+
 
 	if from == "" {
 		tag, err := git.GetLatestTag()
@@ -62,6 +65,7 @@ func generate(c *cli.Context) {
 
 	commits, _ := git.GetChangelogCommits(from, to)
 	writeChangelog(c.String("file"), commits, c)
+	fmt.Println("I got to here")
 }
 
 func writeChangelog(filename string, commits []*git.Commit, c *cli.Context) {

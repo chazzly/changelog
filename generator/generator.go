@@ -40,6 +40,16 @@ type sections struct {
 func GenerateNewChangelogContent(existingContent string, commits []*git.Commit, version string) (newContent string, err error) {
 	fmt.Printf("Generating content for %d commits\n", len(commits))
 
-	newContent = "HIIII" + existingContent
+	header := "CHANGELOG\n========\nList changes on a release by release basis.\n\n"
+	// TODO: Add cookbook name to Header
+
+	var freshContent string = version + "\n------\n"
+	for _,tcommit := range commits {
+		var entry string
+		entry = tcommit.Date + " - "+ tcommit.Author + ": " + tcommit.Subject + "\n\n"
+		freshContent = freshContent + entry
+	}
+
+	newContent = header + freshContent + existingContent
 	return
 }
