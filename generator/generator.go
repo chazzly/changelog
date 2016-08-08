@@ -61,7 +61,7 @@ func GenerateNewChangelogContent(existingContent string, commits []*git.Commit, 
 			case vs, vm:
 				firstVer = true
 				noheader = true
-				oldContent += lines[i] + "\n"
+				oldContent += lines[i] + "  \n"
 			case !headfound && !noheader:
 				header += lines[i] + "\n"
 			case !firstVer:
@@ -79,7 +79,7 @@ func GenerateNewChangelogContent(existingContent string, commits []*git.Commit, 
 	var freshContent string = version + "\n------\n"
 	for _,tcommit := range commits {
 		var entry string
-		entry = tcommit.Date + " - "+ tcommit.Author + ": " + tcommit.Subject + "\n"
+		entry = tcommit.Date + " - "+ tcommit.Author + ": " + tcommit.Subject + "  \n"
 		freshContent = freshContent + entry
 	}
 

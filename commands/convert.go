@@ -113,7 +113,6 @@ func ParseOldLog(oldContent string) (entries []OldEntry, header string, err erro
 			lines[i] = strings.Trim(lines[i], ":")
 			newEntry.Version= strings.Replace(lines[i], "\n", "", 0)
 			firstVer = true
-			fmt.Println(newEntry.Version)
 		case !firstVer:
 			header += lines[i] + "\n"
 		case ao:
@@ -129,7 +128,6 @@ func ParseOldLog(oldContent string) (entries []OldEntry, header string, err erro
 				ln = strings.SplitN(lines[i], " - ", 2)
 			}
 			// TODO: need to account for multiple changes per entry with multiple authors and multi-line body
-			fmt.Println(ln)
 			switch {
 			case len(ln) == 1:
 				newEntryBodyadd(&newEntry, ln[0])
@@ -151,7 +149,7 @@ func newEntryBodyadd(b *OldEntry, t string) *OldEntry{
 	if b.Body == "" {
 		b.Body = t
 	} else {
-		b.Body += "\n" + t
+		b.Body += "  \n" + t
 	}
 	return b
 }
@@ -189,7 +187,7 @@ func GenerateConvertedChangelogContent(header string, entries []OldEntry) (newCo
 	fmt.Printf("Converting %d Change log entries\n", len(entries))
 
 	if header == "" {
-		header = "CHANGELOG\n========\nList changes on a release by release basis.\n"
+		header = "CHANGELOG\n========\nList changes on a release by release basis.\n\n"
 	}
 	// TODO: Add cookbook name to Header
 
@@ -198,9 +196,9 @@ func GenerateConvertedChangelogContent(header string, entries []OldEntry) (newCo
 		tentry := entries[i-1]
 		if tentry.Body == "" { continue } // if body is empty, skip that version entirely
 		if tentry.Author == "" { tentry.Author = "Unknown"}
-		entryContent += tentry.Version
+		entryContent += "\n" + tentry.Version
 		entryContent += "\n------\n"
-		entryContent += tentry.Author + " - " + tentry.Body + "\n\n"
+		entryContent += tentry.Author + " - " + tentry.Body + "\n"
 	}
 
 	newContent = header + "\n" + entryContent + "\n" + IAMCONVERTED
