@@ -25,7 +25,7 @@ import (
 	"os"
 	"regexp"
 	"errors"
-	"github.com/codegangsta/cli/altsrc"
+//	"github.com/codegangsta/cli/altsrc"
 )
 
 const IAMCONVERTED = "<!-- Converted -->"
