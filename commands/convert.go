@@ -25,6 +25,7 @@ import (
 	"os"
 	"regexp"
 	"errors"
+	"github.com/codegangsta/cli/altsrc"
 )
 
 const IAMCONVERTED = "<!-- Converted -->"
@@ -96,6 +97,7 @@ func ParseOldLog(oldContent string) (entries []OldEntry, header string, err erro
 		ao, _ := regexp.MatchString("^\\(.*\\)$", lines[i])
 		bl, _ := regexp.MatchString("^\\s*$", lines[i])
 		ap, _ := regexp.MatchString("^\\(.*\\)", lines[i])
+		ab, _ := regexp.MatchString("^\\[.*\\]", lines[i])
 		switch {
 		case hm:
 			headfound = true
@@ -118,9 +120,12 @@ func ParseOldLog(oldContent string) (entries []OldEntry, header string, err erro
 			newEntry.Author = strings.Trim(lines[i], "()")
 		case newEntry.Version != "":
 			var ln []string
-			if ap {
+			switch {
+			case ap:
 				ln = strings.SplitN(strings.Trim(lines[i], "("), ")", 2)
-			} else {
+			case ab:
+				ln = strings.SplitN(strings.Trim(lines[i], "["), "]", 2)
+			default:
 				ln = strings.SplitN(lines[i], " - ", 2)
 			}
 			// TODO: need to account for multiple changes per entry with multiple authors and multi-line body
