@@ -3,6 +3,7 @@ package git
 import (
 	"os/exec"
 	"regexp"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -62,9 +63,14 @@ type Commit struct {
 
 func GetChangelogCommits(from string, to string) (commits []*Commit, err error) {
 	commits = make([]*Commit, 0)
-	//commitRange := from + ".." + to
+	commitRange := from + ".." + to
+	fmt.Println(commitRange)
+	from = strings.TrimPrefix(from, "\n")
+	from = strings.TrimSuffix(from, "\n")
+	to = strings.TrimPrefix(to, "\n")
+	to = strings.TrimSuffix(to, "\n")
 //	gitCmd := exec.Command("git", "log", "--format=\""+gitCommitFormat+"\"", "--grep=\""+gitCommitGrep+"\"", "-E")
-	gitCmd := exec.Command("git", "log", "--format=\"" + gitCommitFormat + "\"", "--date=format:%c")
+	gitCmd := exec.Command("git", "log", "--format=\"" + gitCommitFormat + "\"", "--date=format:%c", commitRange)
 	output, err := gitCmd.Output()
 	if err != nil {
 		return

@@ -65,6 +65,7 @@ func generate(c *cli.Context) {
 
 	commits, _ := git.GetChangelogCommits(from, to)
 	writeChangelog(c.String("file"), commits, c)
+	// TODO: Create the Git tag of the version.
 }
 
 func writeChangelog(filename string, commits []*git.Commit, c *cli.Context) {

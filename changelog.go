@@ -19,18 +19,16 @@ package main
 
 import (
 	"./commands"
-
 	"github.com/urfave/cli"
 	"os"
 )
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "changelog"
-	app.Usage = "conventional changelog generator"
-	app.Author = "Sebastian Müller"
-	app.Email = "info@sebastian-mueller.net"
-	app.Version = "0.0.1"
+	app.Name = "cars-changelog"
+	app.Usage = "Cars.com cookbook changelog generator, based on changelog generator by Sebastian Müller"
+	app.Authors = []cli.Author{ { "Chaz Ruhl", "cruhl@cars.com"}, {"Sebastian Müller", "info@sebastian-mueller.net"}}
+	app.Version = "0.1.0"
 	app.Commands = Commands()
 	app.Run(os.Args)
 }

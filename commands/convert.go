@@ -47,24 +47,21 @@ func Convert() []cli.Command {
 func convert(c *cli.Context) {
 	// Load current
 	var existingContent string
-
 	contentBytes, err := ioutil.ReadFile(c.String("input"))
-
 	if err != nil {
 		fmt.Println("ERROR reading file to convert: " + c.String("input") + " - " + err.Error())
 		os.Exit(1)
 	}
-
 	existingContent = string(contentBytes)
 
 	// parse into commits - using existing Commit struct
 	entries, header, err := ParseOldLog(existingContent)
 	if err != nil {
-		fmt.Println("ERROR: File to convert: " + c.String("file") + " is empty or has already been converted")
+		fmt.Println("ERROR: File to convert: " + c.String("file") + " " + err.Error())
 		os.Exit(1)
 	}
 
-	// send to writeChangelog
+	// send to write the log
 	writesConvertedChangelog(c.String("file"), header, entries, c)
 }
 
@@ -77,7 +74,7 @@ type OldEntry struct {
 
 func ParseOldLog(oldContent string) (entries []OldEntry, header string, err error) {
 	if oldContent == "" {
-		return nil, "", errors.New("empty")
+		return nil, "", errors.New("is empty")
 	}
 
 	oldContent = strings.TrimPrefix(oldContent, "\n")
@@ -85,42 +82,73 @@ func ParseOldLog(oldContent string) (entries []OldEntry, header string, err erro
 	lines := strings.Split(oldContent, "\n")
 
 	if lines[len(lines)-1] == IAMCONVERTED {
-		return nil, "", errors.New("Already Converted")
+		return nil, "", errors.New("has already been converted")
 	}
 
 	newEntry := OldEntry{}
 	var headfound,firstVer bool
 	for i := 0 ; i < len(lines) ; i++ {
+		bd, _ := regexp.MatchString("^(- )+-*$", lines[i])
 		hm, _ := regexp.MatchString("====*", lines[i])
-		vm, _ := regexp.MatchString("---*", lines[i])
-		vs, _ := regexp.MatchString("\\s*\\d\\.\\d\\.\\d\\s*", lines[i])
+		vm, _ := regexp.MatchString("^---*", lines[i])
+		vs, _ := regexp.MatchString("^#*\\s*\\d+\\.\\d+\\.\\d+\\s*", lines[i])
+		lines[i] = strings.Trim(lines[i], "- *#")  // Remove unnecessary leading dashes, asterisks, spaces, & hashes
+		ao, _ := regexp.MatchString("^\\(.*\\)$", lines[i])
 		bl, _ := regexp.MatchString("^\\s*$", lines[i])
+		ap, _ := regexp.MatchString("^\\(.*\\)", lines[i])
 		switch {
 		case hm:
 			headfound = true
 			header += lines[i] + "\n"
 		case !headfound:
 			header += lines[i] + "\n"
-		case bl, vm:
+		case bl, vm, bd:
 		case vs:
 			if newEntry.Version != "" {
 				entries = append(entries, newEntry)
 				newEntry = OldEntry{}
 			}
+			lines[i] = strings.Trim(lines[i], ":")
 			newEntry.Version= strings.Replace(lines[i], "\n", "", 0)
 			firstVer = true
+			fmt.Println(newEntry.Version)
 		case !firstVer:
 			header += lines[i] + "\n"
+		case ao:
+			newEntry.Author = strings.Trim(lines[i], "()")
 		case newEntry.Version != "":
-			ln := strings.SplitN(lines[i], "-", 2)
+			var ln []string
+			if ap {
+				ln = strings.SplitN(strings.Trim(lines[i], "("), ")", 2)
+			} else {
+				ln = strings.SplitN(lines[i], " - ", 2)
+			}
 			// TODO: need to account for multiple changes per entry with multiple authors and multi-line body
-			newEntry.Author = ln[0]
-			newEntry.Body = ln[1]
+			fmt.Println(ln)
+			switch {
+			case len(ln) == 1:
+				newEntryBodyadd(&newEntry, ln[0])
+			case newEntry.Author == "":
+				newEntry.Author = ln[0]
+				newEntryBodyadd(&newEntry, ln[1])
+			default:
+				newEntryBodyadd(&newEntry, ln[0] + " - " + ln[1])
+			}
 		default:
 		}
 	}
 	entries = append(entries, newEntry)
 	return
+}
+
+
+func newEntryBodyadd(b *OldEntry, t string) *OldEntry{
+	if b.Body == "" {
+		b.Body = t
+	} else {
+		b.Body += "\n" + t
+	}
+	return b
 }
 
 func writesConvertedChangelog(filename, header string, entries []OldEntry, c *cli.Context) {
@@ -163,6 +191,8 @@ func GenerateConvertedChangelogContent(header string, entries []OldEntry) (newCo
 	var entryContent string
 	for i := len(entries); i > 0; i-- {
 		tentry := entries[i-1]
+		if tentry.Body == "" { continue } // if body is empty, skip that version entirely
+		if tentry.Author == "" { tentry.Author = "Unknown"}
 		entryContent += tentry.Version
 		entryContent += "\n------\n"
 		entryContent += tentry.Author + " - " + tentry.Body + "\n\n"

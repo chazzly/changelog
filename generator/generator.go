@@ -24,6 +24,8 @@ import (
 	"regexp"
 )
 
+// TODO: Split changes out based on catagories (bug fixes, enhancements, Breaking, etc.)
+
 const (
 	VERSION          = "## %s%s"
 	PATCH_VERSION    = "### %s%s"
