@@ -10,9 +10,9 @@ import (
 //	"github.com/codegangsta/cli"
 )
 
-const gitCommitGrep = "^feat|^fix|BREAKING"
+// const gitCommitGrep = "^feat|^fix|BREAKING"
 const gitCommitFormat = "%H%n%cd%n%an%n%s%n%b%n==END=="
-const MAX_SUBJECT_LENGTH = 80
+// const MAX_SUBJECT_LENGTH = 80
 
 // var closeRegex = regexp.MustCompile(`\s*(?:Closes|Fixes|Resolves)\s#(\d+)`)
 // var allTypesRegex = regexp.MustCompile(`(?:Closes|Fixes|Resolves)\s((?:#\d+(?:\,\s)?)+)`)
