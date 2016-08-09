@@ -69,7 +69,7 @@ func GetChangelogCommits(from string, to string) (commits []*Commit, err error) 
 	to = strings.TrimPrefix(to, "\n")
 	to = strings.TrimSuffix(to, "\n")
 //	gitCmd := exec.Command("git", "log", "--format=\""+gitCommitFormat+"\"", "--grep=\""+gitCommitGrep+"\"", "-E")
-	gitCmd := exec.Command("git", "log", "--format=\"" + gitCommitFormat + "\"", "--date=format:%c", commitRange)
+	gitCmd := exec.Command("git", "log", "--format=\"" + gitCommitFormat + "\"", "--date=format:%D", commitRange)
 	output, err := gitCmd.Output()
 	if err != nil {
 		fmt.Println("ERROR getting LOG")

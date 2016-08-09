@@ -49,20 +49,19 @@ func GenerateNewChangelogContent(existingContent string, commits []*git.Commit, 
 		existingContent = strings.TrimSuffix(existingContent, "\n")
 		lines := strings.Split(existingContent, "\n")
 
-		var headfound, noheader, firstVer bool
+		var headfound, firstVer bool
 		for i := 0; i < len(lines); i++ {
 			hm, _ := regexp.MatchString("====*", lines[i])
 			vm, _ := regexp.MatchString("---*", lines[i])
-			vs, _ := regexp.MatchString("^\\s*\\d\\.\\d\\.\\d\\s*$", lines[i])
+			vs, _ := regexp.MatchString("^\\s*\\d+\\.\\d+\\.\\d+\\s*$", lines[i])
 			switch {
 			case hm:
 				headfound = true
 				header += lines[i] + "\n"
 			case vs, vm:
 				firstVer = true
-				noheader = true
 				oldContent += lines[i] + "  \n"
-			case !headfound && !noheader:
+			case !headfound && !firstVer:
 				header += lines[i] + "\n"
 			case !firstVer:
 				header += lines[i] + "\n"
